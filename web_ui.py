@@ -1,166 +1,260 @@
 """
-web_ui.py - Interfaz web para hablar con Aitana usando Gradio.
-
-Ejecuta este archivo para abrir una interfaz web en tu navegador.
+web_ui.py - Interfaz web optimizada para hablar con Aitana usando Gradio.
+Compatible con Gradio 6.
 """
 
 import argparse
 import gradio as gr
 from aitana_core import AitanaCore, DEFAULT_MODEL
 
-
-# Variable global para la instancia de Aitana
+# instancia global
 aitana = None
 
 
-def respond(message: str, chat_history: list) -> tuple:
-    """
-    Procesa un mensaje del usuario y devuelve la respuesta de Aitana.
+def respond(message: str, chat_history: list):
 
-    Args:
-        message: Mensaje del usuario.
-        chat_history: Historial de mensajes en formato Gradio.
-
-    Returns:
-        Tuple con (campo de texto vacío, historial actualizado).
-    """
     global aitana
 
-    # Comandos especiales
-    if message.strip().lower() == "/estado":
+    if not message:
+        return "", chat_history
+
+    if chat_history is None:
+        chat_history = []
+
+    message = message.strip()
+
+    # ---------------------------
+    # COMANDO: /estado
+    # ---------------------------
+
+    if message.lower() == "/estado":
+
         status = aitana.get_status()
-        bot_message = "--- Estado de Aitana ---\n"
+
+        bot_message = "### Estado de Aitana\n"
+
         for key, value in status.items():
-            bot_message += f"  {key}: {value}\n"
+            bot_message += f"- **{key}**: {value}\n"
+
         chat_history.append({"role": "user", "content": message})
         chat_history.append({"role": "assistant", "content": bot_message})
+
         return "", chat_history
 
-    if message.strip().lower() == "/limpiar":
+    # ---------------------------
+    # COMANDO: /limpiar
+    # ---------------------------
+
+    if message.lower() == "/limpiar":
+
         aitana.clear_history()
+
         return "", []
 
-    if message.strip().lower().startswith("/memoria "):
-        text = message.strip()[9:]
+    # ---------------------------
+    # COMANDO: /memoria
+    # ---------------------------
+
+    if message.lower().startswith("/memoria "):
+
+        text = message[9:].strip()
+
         success = aitana.add_memory(text)
-        result = "Memoria guardada correctamente." if success else "No se pudo guardar."
+
+        result = (
+            "Memoria guardada correctamente."
+            if success
+            else "No se pudo guardar la memoria."
+        )
+
         chat_history.append({"role": "user", "content": message})
         chat_history.append({"role": "assistant", "content": result})
+
         return "", chat_history
 
-    # Mensaje normal: obtener respuesta de Aitana
-    response = aitana.chat(message)
+    # ---------------------------
+    # CHAT NORMAL
+    # ---------------------------
 
     chat_history.append({"role": "user", "content": message})
-    chat_history.append({"role": "assistant", "content": response})
 
-    return "", chat_history
+    # indicador de escritura
+    chat_history.append({"role": "assistant", "content": "Aitana está escribiendo..."})
+
+    yield "", chat_history
+
+    try:
+
+        response = aitana.chat(message)
+
+    except Exception as e:
+
+        response = f"Error generando respuesta:\n{str(e)}"
+
+    # reemplazar indicador
+    chat_history[-1] = {"role": "assistant", "content": response}
+
+    yield "", chat_history
 
 
-def upload_file(file) -> str:
-    """
-    Procesa un archivo subido y lo agrega a la memoria de Aitana.
+def upload_file(file):
 
-    Args:
-        file: Archivo subido por el usuario.
-
-    Returns:
-        Mensaje de estado.
-    """
     global aitana
+
     if file is None:
         return "No se seleccionó ningún archivo."
 
-    success = aitana.add_memory_file(file.name)
-    if success:
-        return f"Archivo '{file.name}' procesado y guardado en la memoria de Aitana."
-    return f"No se pudo procesar el archivo '{file.name}'."
+    try:
+
+        success = aitana.add_memory_file(file.name)
+
+        if success:
+            return f"Archivo procesado correctamente:\n{file.name}"
+
+        return "No se pudo procesar el archivo."
+
+    except Exception as e:
+
+        return f"Error procesando archivo:\n{str(e)}"
 
 
-def create_ui() -> gr.Blocks:
-    """Crea la interfaz web con Gradio."""
+def create_ui():
 
-    with gr.Blocks(
-        title="Aitana - Tu Amiga Virtual",
-        theme=gr.themes.Soft(
-            primary_hue="pink",
-            secondary_hue="purple",
-        ),
-        css="""
-        .gradio-container { max-width: 800px !important; margin: auto; }
-        footer { display: none !important; }
-        """
-    ) as app:
+    with gr.Blocks(title="Aitana - Tu Amiga Virtual") as app:
+
         gr.Markdown(
             """
-            # ✨ Aitana - Tu Amiga Virtual ✨
-            *Escribe un mensaje para hablar con Aitana. Comandos: /estado, /limpiar, /memoria <texto>*
-            """
+# ✨ Aitana - Tu Amiga Virtual
+
+Escribe un mensaje para hablar con Aitana.
+
+**Comandos disponibles**
+
+- `/estado` → muestra información del sistema
+- `/limpiar` → limpia la conversación
+- `/memoria texto` → guarda algo en memoria
+"""
         )
 
         chatbot = gr.Chatbot(
-            label="Conversación",
-            height=500,
-            type="messages",
-            avatar_images=(None, "https://api.dicebear.com/7.x/avataaars/svg?seed=Aitana&backgroundColor=ffd5dc"),
-        )
+    label="Conversación",
+    height=500,
+    avatar_images=(
+        None,
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Aitana&backgroundColor=ffd5dc",
+    ),
+)
 
         with gr.Row():
+
             msg = gr.Textbox(
-                label="Tu mensaje",
-                placeholder="Escribe aquí...",
+                placeholder="Escribe tu mensaje...",
                 scale=4,
                 container=False,
             )
-            send_btn = gr.Button("Enviar", variant="primary", scale=1)
+
+            send_btn = gr.Button(
+                "Enviar",
+                variant="primary",
+                scale=1,
+            )
 
         with gr.Accordion("Agregar archivo a la memoria", open=False):
+
             file_upload = gr.File(
-                label="Sube un archivo de texto (.txt) para que Aitana lo recuerde",
+                label="Sube un archivo (.txt, .md, .csv)",
                 file_types=[".txt", ".md", ".csv"],
             )
-            upload_btn = gr.Button("Procesar archivo")
-            upload_status = gr.Textbox(label="Estado", interactive=False)
 
-        # Eventos
-        msg.submit(respond, [msg, chatbot], [msg, chatbot])
-        send_btn.click(respond, [msg, chatbot], [msg, chatbot])
-        upload_btn.click(upload_file, [file_upload], [upload_status])
+            upload_btn = gr.Button("Procesar archivo")
+
+            upload_status = gr.Textbox(
+                label="Estado",
+                interactive=False,
+            )
+
+        # eventos
+
+        msg.submit(
+            respond,
+            [msg, chatbot],
+            [msg, chatbot],
+        )
+
+        send_btn.click(
+            respond,
+            [msg, chatbot],
+            [msg, chatbot],
+        )
+
+        upload_btn.click(
+            upload_file,
+            [file_upload],
+            [upload_status],
+        )
 
     return app
 
 
 def main():
-    """Función principal - inicia la interfaz web."""
 
     parser = argparse.ArgumentParser(description="Interfaz web para Aitana.")
+
     parser.add_argument(
-        "--modelo", "-m",
+        "--modelo",
+        "-m",
         default=DEFAULT_MODEL,
-        help=f"Modelo de Ollama a usar (default: {DEFAULT_MODEL})"
+        help=f"Modelo de Ollama a usar (default: {DEFAULT_MODEL})",
     )
+
     parser.add_argument(
         "--sin-rag",
         action="store_true",
-        help="Desactivar la memoria a largo plazo (RAG)"
+        help="Desactivar memoria a largo plazo",
     )
+
     parser.add_argument(
-        "--puerto", "-p",
+        "--puerto",
+        "-p",
         type=int,
         default=7860,
-        help="Puerto para la interfaz web (default: 7860)"
+        help="Puerto del servidor",
     )
+
     args = parser.parse_args()
 
-    # Inicializar Aitana
     global aitana
-    print("Iniciando a Aitana...")
-    aitana = AitanaCore(model=args.modelo, use_rag=not args.sin_rag)
 
-    # Crear y lanzar la interfaz
+    print("Iniciando a Aitana...")
+
+    aitana = AitanaCore(
+        model=args.modelo,
+        use_rag=not args.sin_rag,
+    )
+
     app = create_ui()
-    print(f"\nAbriendo interfaz web en http://localhost:{args.puerto}")
-    app.launch(server_port=args.puerto, share=False)
+
+    print(f"\nInterfaz disponible en:")
+    print(f"http://localhost:{args.puerto}")
+
+    app.launch(
+        server_port=args.puerto,
+        theme=gr.themes.Soft(
+            primary_hue="pink",
+            secondary_hue="purple",
+        ),
+        css="""
+        .gradio-container {
+            max-width: 900px !important;
+            margin: auto;
+        }
+
+        footer {
+            display: none !important;
+        }
+        """,
+        share=False,
+    )
 
 
 if __name__ == "__main__":

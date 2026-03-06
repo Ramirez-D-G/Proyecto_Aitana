@@ -16,7 +16,7 @@ from rag_engine import RAGEngine
 
 # Configuración de Ollama
 OLLAMA_URL = "http://localhost:11434/api/chat"
-DEFAULT_MODEL = "llama3.1:8b-instruct-q4_0"
+DEFAULT_MODEL = "llama3.1:8b-instruct-q4_K_M"
 
 # Memoria a corto plazo: número máximo de mensajes en el historial
 MAX_HISTORY = 20  # 10 pares de usuario-Aitana
