@@ -88,20 +88,19 @@ def test_rag():
 
         # Documento de prueba con información del usuario
         test_text = (
-            "Mi mejor amigo se llama David Gonzalo Sánchez Ramírez, aunque la mayoría de sus amigos lo conocen como Chalo. "
-            "Nació el 29 de noviembre de 2005 en San Pedro Pochutla, Oaxaca, México. "
-            "Es originario de una ranchería llamada El Corozal, también conocida como El Doscientos Uno, en el pueblo de San Juan Lachao en Oaxaca. "
-            "Actualmente estudia Ingeniería e Innovación Tecnológica en la Universidad Autónoma Benito Juárez de Oaxaca. "
-            "Le gusta mucho la tecnología y sueña con crear una inteligencia artificial desde cero que pueda ayudar y acompañar a las personas. "
-            "En sus tiempos libres trabaja ayudando a su papá a repartir materiales de construcción como ladrillos, blocks, tejas y cemento. "
-            "Le encantan los videojuegos, caminar, tomar fotos, pasear en bicicleta y visitar montañas. "
-            "También disfruta escuchar música variada como corridos, regional, bachata, pop y cumbia. "
-            "Sus artistas favoritos son Iván Cornejo y El de la Guitarra. "
-            "Entre sus videojuegos favoritos están The Last of Us, Red Dead Redemption, Metro Exodus, Minecraft y Forza Horizon 4 y 5. "
-            "A mi amigo Chalo también le apasionan los autos y las carreras de resistencia como las 24 horas de Le Mans, Nürburgring y Daytona. "
-            "Tiene un gato llamado Agripino, que es blanco con manchas amarillas y muy berrinchudo. "
-            "Agripino suele llorar y tirarse al suelo cuando lo regañan. "
-            "Uno de los sueños de Chalo es tener un rancho, un negocio propio, un auto deportivo como un Maserati o un Porsche, y formar una familia con un niño y dos niñas."
+            "Mi mejor amigo se llama (Tu nombre), aunque la mayoría de sus amigos lo conocen como (Tu apodo). "
+            "Nació el DD/MM/AA en (Ligar de nacimiento). "
+            "Es originario de (Lugar de donde eres originario), también conocida como (Como se conoce comunmente), en el pueblo de (Tu Pueblo) en (Tu estado). "
+            "Actualmente estudia (Lo que estudias) en la (En donde estudias). "
+            "Le gusta mucho (Tus gustos). "
+            "En sus tiempos libres (Lo que haces en tus pasatiempos libres). "
+            "Le encanta (Lo que te encanta). "
+            "También disfruta (Lo que disfrutas). "
+            "Sus artistas favoritos son (Tus artistas favoritos). "
+            "Entre sus videojuegos favoritos están (Tus videojuegos favoritos). "
+            "A mi amigo (Tu apodo) también le apasiona (Lo que te apaciona). "
+            "Tiene (Tu(s) mascota(s)). "
+            "Uno de los sueños de (Tu apodo) es (Tu sueño)."
         )
 
         count = rag.add_document(test_text, source="test")
